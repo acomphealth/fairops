@@ -1,6 +1,20 @@
 import os
+import subprocess
 import sys
 sys.path.insert(0, os.path.abspath("../.."))  # Ensure your package is found
+
+
+# Auto-generate API documentation using sphinx-apidoc
+def run_apidoc():
+    """Automatically generate .rst files for API documentation"""
+    module_path = os.path.abspath("../../fairops")
+    output_path = os.path.abspath("./")
+    ignore_paths = ["tests", "setup.py"]
+    command = ["sphinx-apidoc", "-o", output_path, module_path] + ignore_paths
+    subprocess.call(command)
+
+
+run_apidoc()
 
 # Enable autodoc
 extensions = [
