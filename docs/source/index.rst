@@ -6,14 +6,3 @@ Welcome to fairops's documentation!
    :caption: Contents:
 
    modules
-
-API Reference
-=============
-
-.. automodule:: fairops
-    :members:
-
-.. automodule:: fairops.figshare.client
-    :members:
-    :undoc-members:
-    :show-inheritance:
