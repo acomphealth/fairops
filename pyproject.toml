@@ -9,7 +9,7 @@ local_scheme = "no-local-version"
 
 [project]
 name = "fairops"
-description = "A Python library for fair operations in AI"
+description = "A Python library for FAIR AI/ML ops pipelines"
 authors = [{name = "Wade Schulz", email = "wade.schulz@yale.edu"}]
 license = {text = "MIT"}
 readme = "README.md"
