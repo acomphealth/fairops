@@ -15,3 +15,9 @@ documentation for details.
    :maxdepth: 2
    :caption: Contents:
 
+
+API Reference
+=============
+
+.. automodule:: fairops
+    :members:
