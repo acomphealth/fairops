@@ -3,7 +3,7 @@ name: Auto-Tag and Publish to PyPI
 on:
   push:
     branches:
-      - main  # Runs only on pushes to main branch
+      - main  # Runs only on pushes to the main branch
 
 jobs:
   tag-version:
@@ -14,17 +14,22 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # ✅ Ensure all tags are available
+          fetch-depth: 0  # ✅ Ensure all commits and tags are fetched
 
       - name: Install Python & Dependencies
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
 
-      - name: Install setuptools_scm
+      - name: Install `setuptools_scm`
         run: pip install setuptools setuptools_scm
 
-      - name: Get Latest Version from Git Tags
+      - name: Fetch All Tags
+        run: |
+          git fetch --tags --force
+          git describe --tags --abbrev=0 || echo "No previous tag found"
+
+      - name: Get Latest Version from `setuptools_scm`
         id: get_version
         run: |
           NEW_VERSION=$(python -c 'import setuptools_scm; print(setuptools_scm.get_version())')
