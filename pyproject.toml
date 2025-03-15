@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "fairops/version.py"
+
+[project]
+name = "fairops"
+description = "A Python library for fair operations in AI"
+authors = [{name = "Wade Schulz", email = "wade.schulz@yale.edu"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "requests (>=2.32.3,<3.0.0)",
+    "tqdm (>=4.67.1,<5.0.0)"
+
+]
+
+[project.urls]
+Homepage = "https://github.com/acomphealth/fairops"
