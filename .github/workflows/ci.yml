@@ -3,7 +3,7 @@ name: Auto-Tag and Publish to PyPI
 on:
   push:
     branches:
-      - main  # Runs on main branch pushes
+      - main  # Runs only on pushes to main branch
 
 jobs:
   tag-version:
@@ -14,7 +14,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all tags
+          fetch-depth: 0  # ✅ Ensure all tags are available
 
       - name: Install Python & Dependencies
         uses: actions/setup-python@v4
@@ -27,23 +27,29 @@ jobs:
       - name: Get Latest Version from Git Tags
         id: get_version
         run: |
-          echo "NEW_VERSION=$(python -c 'import setuptools_scm; print(setuptools_scm.get_version())')" >> $GITHUB_ENV
+          NEW_VERSION=$(python -c 'import setuptools_scm; print(setuptools_scm.get_version())')
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "Detected version: $NEW_VERSION"
 
-      - name: Check if Tag Exists
+      - name: Check If Tag Exists
         id: tag
         run: |
           if git rev-parse "v$NEW_VERSION" >/dev/null 2>&1; then
-            echo "Tag already exists. Skipping." && exit 0
+            echo "Tag v$NEW_VERSION already exists. Skipping tagging."
+            exit 0
           fi
           echo "new_tag=v$NEW_VERSION" >> $GITHUB_ENV
+          echo "Tagging new version: v$NEW_VERSION"
 
       - name: Create Git Tag
         if: env.new_tag != ''
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git tag $new_tag
-          git push origin $new_tag
+          git tag "v$NEW_VERSION"
+          git push origin "v$NEW_VERSION"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish:
     needs: tag-version
