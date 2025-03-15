@@ -1,69 +1,12 @@
-name: Auto-Tag and Publish to PyPI
+name: Publish to PyPI on Tag
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - "v*"
 
 jobs:
-  tag-version:
-    runs-on: ubuntu-latest
-    outputs:
-      new_tag: ${{ steps.tag.outputs.new_tag }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Fetch All Tags
-        run: git fetch --tags --force
-
-      - name: Install Python & Dependencies
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
-
-      - name: Install `setuptools_scm`
-        run: pip install setuptools setuptools_scm
-
-      - name: Determine Next Version
-        id: get_version
-        run: |
-          NEW_VERSION=$(python -c 'import setuptools_scm; print(setuptools_scm.get_version())')
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          echo "Detected version: $NEW_VERSION"
-
-      - name: Check If Tag Exists
-        id: tag
-        run: |
-          if git rev-parse "v$NEW_VERSION" >/dev/null 2>&1; then
-            echo "Tag v$NEW_VERSION already exists. Skipping tagging."
-            exit 0
-          fi
-          echo "new_tag=v$NEW_VERSION" >> $GITHUB_ENV
-          echo "Tagging new version: v$NEW_VERSION"
-
-      - name: Create Git Tag
-        if: env.new_tag != ''
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git tag "v$NEW_VERSION"
-          git push origin "v$NEW_VERSION"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Fetch New Tags & Re-run `setuptools_scm`
-        run: |
-          git fetch --tags --force
-          NEW_VERSION=$(python -c 'import setuptools_scm; print(setuptools_scm.get_version())')
-          echo "NEW_VERSION=$NEW_VERSION"
-          echo "Revalidated version after tagging: $NEW_VERSION"
-
   publish:
-    needs: tag-version
-    if: needs.tag-version.outputs.new_tag != ''
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -79,9 +22,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install build twine setuptools setuptools_scm
 
+      - name: Verify Version from `setuptools_scm`
+        run: python -c "import setuptools_scm; print(setuptools_scm.get_version())"
+
       - name: Build and Publish to PyPI
         env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_USERNAME: ${{ secrets.PYPI_API_TOKEN }}
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           python -m build
