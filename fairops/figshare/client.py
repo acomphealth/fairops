@@ -19,6 +19,9 @@ class FigshareClient:
         Args:
             api_token (str): The Figshare API token for authentication.
         """
+        if api_token is None:
+            raise Exception("figshare API token must be set")
+
         self.api_token = api_token
         self.base_url = "https://api.figshare.com/v2"
         self.headers = {"Authorization": f"token {self.api_token}"}
@@ -84,14 +87,14 @@ class FigshareClient:
                 "GET",
                 f"{self.base_url}/account/articles/{article_id}/files"
             )
-        except:
+        except:  # noqa: E722
             try:
                 files = self._issue_request(
                     "GET",
                     f"{self.base_url}/articles/{article_id}/files"
                 )
-            except:
-                raise Exception("Article not found or insufficent permissions")
+            except:  # noqa: E722
+                raise Exception("DOI not found or insufficent permissions")
 
         for file in files:
             file_download_url = file["download_url"]
