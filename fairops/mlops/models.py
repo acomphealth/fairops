@@ -75,7 +75,7 @@ class LoggedMetrics:
             return self.metrics[experiment_id]
         return self.metrics  # Return all metrics if no filters applied
 
-    def export_to_dict(self):
+    def to_dict(self):
         """Export logged metrics to a JSON file while preserving hierarchy."""
         structured_data = [
             {
@@ -105,7 +105,7 @@ class LoggedMetrics:
         ]
         return structured_data
 
-    def export_to_dataframe(self):
+    def to_dataframe(self):
         """Convert logged metrics into a Pandas DataFrame for analysis."""
         all_metrics = [{
             "experiment_id": experiment_id,
@@ -176,7 +176,7 @@ class LoggedParams:
             return self.params[experiment_id]
         return self.params  # Return all parameters if no filters applied
 
-    def export_to_dict(self):
+    def to_dict(self):
         """Export logged parameters to a JSON file while preserving hierarchy."""
         structured_data = [
             {
@@ -196,7 +196,7 @@ class LoggedParams:
         ]
         return structured_data
 
-    def export_to_dataframe(self):
+    def to_dataframe(self):
         """Convert logged parameters into a Pandas DataFrame for analysis."""
         all_params = [
             param.to_dict()

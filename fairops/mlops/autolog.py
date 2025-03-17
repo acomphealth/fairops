@@ -52,11 +52,11 @@ class AutoLogger(ABC):
                 run["run_id"]: run.get("parameters", [])
                 for run in exp["runs"]
             }
-            for exp in self.param_store.export_to_dict()
+            for exp in self.param_store.to_dict()
         }
 
         # Convert metrics data to a structured list
-        for exp in self.metrics_store.export_to_dict():
+        for exp in self.metrics_store.to_dict():
             experiment_id = exp["experiment_id"]
             for run in exp["runs"]:
                 run_id = run["run_id"]
