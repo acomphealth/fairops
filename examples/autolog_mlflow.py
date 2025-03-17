@@ -20,5 +20,15 @@ with mlflow.start_run() as run:
 
     mlflow.log_metrics(test_metrics)
 
+print("--- DataFrame Params ---")
+print(ml_logger.param_store.export_to_dataframe())
+print("--- DataFrame Metrics ---")
 print(ml_logger.metrics_store.export_to_dataframe())
-print(ml_logger.param_store)
+
+print("--- Dictionary Params ---")
+print(ml_logger.param_store.export_to_dict())
+print("--- Dictionary Metrics ---")
+print(ml_logger.metrics_store.export_to_dict())
+
+print("--- Combined Dictionary ---")
+print(ml_logger.export_logs_to_dict())

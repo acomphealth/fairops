@@ -60,37 +60,76 @@ class LoggedMetric:
 
 class LoggedMetrics:
     def __init__(self):
-        # Hierarchical storage: {run_id -> {key -> {step -> [LoggedMetric]}}}
-        self.metrics = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        # Hierarchical storage: {experiment_id -> {run_id -> {key -> {step -> [LoggedMetric]}}}}
+        self.metrics = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list))))
 
     def add_metric(self, metric: LoggedMetric):
         """Store a new metric."""
-        self.metrics[metric.run_id][metric.key][metric.step].append(metric)
+        self.metrics[metric.experiment_id][metric.run_id][metric.key][metric.step] = metric
 
-    def get_metrics(self, run_id: str | None = None, key: str | None = None, step: int | None = None):
-        """Retrieve stored metrics for a given run_id, key, and/or step."""
-        if run_id and run_id in self.metrics:
-            if key and key in self.metrics[run_id]:
-                if step is not None:
-                    return self.metrics[run_id][key].get(step, [])
-                return self.metrics[run_id][key]
-            return self.metrics[run_id]
+    def get_metrics(self, experiment_id: str | None = None, run_id: str | None = None,
+                    key: str | None = None, step: int | None = None):
+        """Retrieve stored metrics for a given experiment_id, run_id, key, and/or step."""
+        if experiment_id and experiment_id in self.metrics:
+            if run_id and run_id in self.metrics[experiment_id]:
+                if key and key in self.metrics[experiment_id][run_id]:
+                    if step is not None:
+                        return self.metrics[experiment_id][run_id][key].get(step, [])
+                    return self.metrics[experiment_id][run_id][key]
+                return self.metrics[experiment_id][run_id]
+            return self.metrics[experiment_id]
         return self.metrics  # Return all metrics if no filters applied
+
+    def export_to_dict(self):
+        """Export logged metrics to a JSON file while preserving hierarchy."""
+        structured_data = [
+            {
+                "experiment_id": experiment_id,
+                "runs": [
+                    {
+                        "run_id": run_id,
+                        "metrics": [
+                            {
+                                "key": key,
+                                "steps": [
+                                    {
+                                        "step": step,
+                                        "value": metric.value,
+                                        "timestamp": metric.timestamp
+                                    }
+                                    for step, metric in key_metrics.items()
+                                ]
+                            }
+                            for key, key_metrics in run_data.items()
+                        ]
+                    }
+                    for run_id, run_data in exp_data.items()
+                ]
+            }
+            for experiment_id, exp_data in self.metrics.items()
+        ]
+        return structured_data
 
     def export_to_dataframe(self):
         """Convert logged metrics into a Pandas DataFrame for analysis."""
-        all_metrics = [
-            metric.to_dict()
-            for run in self.metrics.values()
-            for key in run.values()
-            for step in key.values()
-            for metric in step
+        all_metrics = [{
+            "experiment_id": experiment_id,
+            "run_id": run_id,
+            "key": key,
+            "step": step,
+            "value": metric.value,
+            "timestamp": metric.timestamp
+        }
+            for experiment_id, exp_data in self.metrics.items()
+            for run_id, run_data in exp_data.items()
+            for key, key_metrics in run_data.items()
+            for step, metric in key_metrics.items()
         ]
         return pd.DataFrame(all_metrics)
 
-    def aggregate(self, run_id: str, key: str, step: int, method="mean"):
-        """Aggregate multiple values at the same step."""
-        values = [m.value for m in self.get_metrics(run_id, key, step)]
+    def aggregate(self, experiment_id: str, run_id: str, key: str, step: int, method="mean"):
+        """Aggregate multiple values at the same step for a specific experiment and run."""
+        values = [m.value for m in self.get_metrics(experiment_id, run_id, key, step)]
         if not values:
             return None
         if method == "mean":
@@ -103,11 +142,125 @@ class LoggedMetrics:
             raise ValueError(f"Unsupported aggregation method: {method}")
 
 
+class LoggedParam:
+    def __init__(self, key: str, value: float, run_id: str | None = None, experiment_id: str | None = None):
+        self.key = key
+        self.value = value
+        self.run_id = mlflow.active_run().info.run_id
+        self.experiment_id = mlflow.active_run().info.experiment_id
+
+    def __repr__(self):
+        return f"LoggedParam(key={self.key}, value={self.value}, run_id={self.run_id}, experiment_id={self.experiment_id})"
+
+    def to_dict(self):
+        """Convert to dictionary for easy logging/exporting."""
+        return {
+            "run_id": self.run_id,
+            "key": self.key,
+            "value": self.value,
+            "experiment_id": self.experiment_id
+        }
+
+
+class LoggedParams:
+    def __init__(self):
+        # Hierarchical storage: {experiment_id -> {run_id -> {key -> LoggedParam}}}
+        self.params = defaultdict(lambda: defaultdict(dict))
+
+    def add_param(self, param: LoggedParam):
+        """Store a new parameter."""
+        self.params[param.experiment_id][param.run_id][param.key] = param
+
+    def get_params(self, experiment_id: str | None = None, run_id: str | None = None, key: str | None = None):
+        """Retrieve stored parameters for a given experiment_id, run_id, and/or key."""
+        if experiment_id and experiment_id in self.params:
+            if run_id and run_id in self.params[experiment_id]:
+                if key and key in self.params[experiment_id][run_id]:
+                    return self.params[experiment_id][run_id][key]
+                return self.params[experiment_id][run_id]
+            return self.params[experiment_id]
+        return self.params  # Return all parameters if no filters applied
+
+    def export_to_dict(self):
+        """Export logged parameters to a JSON file while preserving hierarchy."""
+        structured_data = [
+            {
+                "experiment_id": experiment_id,
+                "runs": [
+                    {
+                        "run_id": run_id,
+                        "parameters": [
+                            {"key": key, "value": param.value}
+                            for key, param in run_data.items()
+                        ]
+                    }
+                    for run_id, run_data in exp_data.items()
+                ]
+            }
+            for experiment_id, exp_data in self.params.items()
+        ]
+        return structured_data
+
+    def export_to_dataframe(self):
+        """Convert logged parameters into a Pandas DataFrame for analysis."""
+        all_params = [
+            param.to_dict()
+            for exp in self.params.values()
+            for run in exp.values()
+            for param in run.values()
+        ]
+        return pd.DataFrame(all_params)
+
+
 # Abstract base class for logging
 class AutoLogger(ABC):
     def __init__(self):
         self.metrics_store = LoggedMetrics()
-        self.param_store = {}
+        self.param_store = LoggedParams()
+
+    def export_logs_to_dict(self):
+        """
+        Combines metrics and parameters into a unified JSON structure.
+
+        Args:
+            metrics_data (list): List of dictionaries containing metrics.
+            params_data (list): List of dictionaries containing parameters.
+            filepath (str, optional): Path to save the JSON file.
+
+        Returns:
+            str: JSON-formatted string.
+        """
+        combined_data = []
+
+        # Convert params data to a lookup dictionary {experiment_id -> {run_id -> [params_list]}}
+        params_lookup = {
+            exp["experiment_id"]: {
+                run["run_id"]: run.get("parameters", [])
+                for run in exp["runs"]
+            }
+            for exp in self.param_store.export_to_dict()
+        }
+
+        # Convert metrics data to a structured list
+        for exp in self.metrics_store.export_to_dict():
+            experiment_id = exp["experiment_id"]
+            for run in exp["runs"]:
+                run_id = run["run_id"]
+
+                # Fetch parameters if available, otherwise use an empty list
+                params_list = params_lookup.get(experiment_id, {}).get(run_id, [])
+
+                # Keep metrics in array format
+                metrics_list = run["metrics"]
+
+                combined_data.append({
+                    "experiment_id": experiment_id,
+                    "run_id": run_id,
+                    "params": params_list,
+                    "metrics": metrics_list
+                })
+
+        return combined_data
 
     @abstractmethod
     def log_param(self, key: str, value, synchronous: bool | None = None):
@@ -138,9 +291,12 @@ class MLflowAutoLogger(AutoLogger):
             print("[MLflowAutoLogger] MLflow is not installed. Skipping logging.")
             return
 
-        self.param_store[key] = value
+        param_result = _original_mlflow_log_param(key, value, synchronous)
 
-        return _original_mlflow_log_param(key, value, synchronous)
+        param = LoggedParam(key, value)
+        self.param_store.add_param(param)
+
+        return param_result
 
     def log_metric(
             self,
@@ -155,10 +311,7 @@ class MLflowAutoLogger(AutoLogger):
             print("[MLflowAutoLogger] MLflow is not installed. Skipping logging.")
             return
 
-        metric = LoggedMetric(key, value, step, timestamp, run_id)
-        self.metrics_store.add_metric(metric)
-
-        return _original_mlflow_log_metric(
+        run_operation = _original_mlflow_log_metric(
             key,
             value,
             step,
@@ -166,6 +319,11 @@ class MLflowAutoLogger(AutoLogger):
             timestamp,
             run_id
         )
+
+        metric = LoggedMetric(key, value, step, timestamp, run_id)
+        self.metrics_store.add_metric(metric)
+
+        return run_operation
 
     def log_metrics(
             self,
@@ -179,17 +337,19 @@ class MLflowAutoLogger(AutoLogger):
             print("[MLflowAutoLogger] MLflow is not installed. Skipping logging.")
             return
 
-        for k, v in metrics.items():
-            metric = LoggedMetric(k, v, step, timestamp, run_id)
-            self.metrics_store.add_metric(metric)
-
-        return _original_mlflow_log_metrics(
+        run_operation = _original_mlflow_log_metrics(
             metrics,
             step,
             synchronous,
             run_id,
             timestamp
         )
+
+        for k, v in metrics.items():
+            metric = LoggedMetric(k, v, step, timestamp, run_id)
+            self.metrics_store.add_metric(metric)
+
+        return run_operation
 
 
 # W&B Logger Implementation
