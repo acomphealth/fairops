@@ -2,7 +2,9 @@ import importlib
 from abc import ABC, abstractmethod
 from collections import defaultdict
 import pandas as pd
+import json
 import time
+import os
 
 
 # Check for MLflow and W&B availability
@@ -263,6 +265,10 @@ class AutoLogger(ABC):
         return combined_data
 
     @abstractmethod
+    def export_logs_as_artifact(self, base_path):
+        pass
+
+    @abstractmethod
     def log_param(self, key: str, value, synchronous: bool | None = None):
         pass
 
@@ -281,6 +287,24 @@ class AutoLogger(ABC):
 
 # MLflow Logger Implementation
 class MLflowAutoLogger(AutoLogger):
+    def export_logs_as_artifact(self, base_path):
+        experiment_id = mlflow.active_run().info.experiment_id
+        run_id = mlflow.active_run().info.run_id
+        log_path = os.path.join(base_path, experiment_id, run_id)
+        os.makedirs(log_path, exist_ok=True)
+        log_file_path = os.path.join(log_path, "results.json")
+        if os.path.exists(log_file_path):
+            raise Exception(f"Log file path already exists {log_file_path}")
+
+        logs = self.export_logs_to_dict()
+        run_logs = next((log for log in logs if log["experiment_id"] == experiment_id and log["run_id"] == run_id), None)
+
+        if run_logs is not None:
+            with open(log_file_path, "w") as log_file:
+                json.dump(run_logs, log_file, indent=4)
+            mlflow.log_artifact(log_file_path)
+            os.remove(log_file_path)
+
     def log_param(
             self,
             key: str,
