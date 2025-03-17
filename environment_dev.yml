@@ -5,5 +5,5 @@ dependencies:
   - python=3.12
   - pip
   - pip:
-      - -r requirements.txt
-      - -e .
+      - -r requirements_dev.txt
+      - -e . --no-build-isolation
