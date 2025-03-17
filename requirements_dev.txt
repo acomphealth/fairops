@@ -23,7 +23,6 @@ docker==7.1.0
 docker-pycreds==0.4.0
 docutils==0.21.2
 dulwich==0.22.8
--e .
 fastapi==0.115.11
 fastjsonschema==2.21.1
 filelock==3.18.0
