@@ -102,6 +102,12 @@ class AutoLogger(ABC):
                    run_id: str | None = None):
         pass
 
+    @abstractmethod
+    def log_metrics(self, metrics: dict[str, float], step: int | None = None,
+                    synchronous: bool | None = None, timestamp: int | None = None,
+                    run_id: str | None = None):
+        pass
+
 
 # MLflow Logger Implementation
 class MLflowAutoLogger(AutoLogger):
@@ -146,7 +152,7 @@ class MLflowAutoLogger(AutoLogger):
             metric = LoggedMetric(k, v, step, timestamp, run_id)
             self.metrics_store.add_metric(metric)
 
-        return mlflow.log_metrics(
+        return _original_mlflow_log_metrics(
             metrics,
             step,
             synchronous,
@@ -161,13 +167,7 @@ class WandbAutoLogger(AutoLogger):
         self.logged_metrics = []
 
     def log_metric(self, key, value):
-        if not wandb_available:
-            print("[WandbAutoLogger] W&B is not installed. Skipping logging.")
-            return
-        print(f"[W&B] Logging {key}: {value}")
-        self.logged_metrics.append((key, value))
-        if _original_wandb_log:
-            _original_wandb_log({key: value})
+        raise NotImplementedError()
 
 
 # Logger Factory (Auto-registering)
