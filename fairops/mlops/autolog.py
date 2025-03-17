@@ -2,6 +2,7 @@ import importlib
 from abc import ABC, abstractmethod
 from collections import defaultdict
 import pandas as pd
+import time
 
 
 # Check for MLflow and W&B availability
@@ -11,6 +12,7 @@ wandb_available = importlib.util.find_spec("wandb") is not None
 # Conditional imports
 if mlflow_available:
     import mlflow
+    _original_mlflow_log_param = mlflow.log_param
     _original_mlflow_log_metric = mlflow.log_metric
     _original_mlflow_log_metrics = mlflow.log_metrics
 else:
@@ -25,15 +27,24 @@ else:
 
 class LoggedMetric:
     def __init__(self, key: str, value: float, step: int | None = None,
-                 timestamp: int | None = None, run_id: str | None = None):
+                 timestamp: int | None = None, run_id: str | None = None,
+                 experiment_id: str | None = None):
         self.key = key
         self.value = value
-        self.step = step if step is not None else 0
-        self.timestamp = timestamp if timestamp is not None else 0
-        self.run_id = run_id if run_id is not None else "default_run"
+        self.step = step
+        self.timestamp = timestamp
+        self.run_id = run_id
+        self.experiment_id = experiment_id
+
+        if self.experiment_id is None:
+            self.experiment_id = mlflow.active_run().info.experiment_id
+
+        self.timestamp = self.timestamp if self.timestamp is not None else int(time.time())
+        if self.run_id is None:
+            self.run_id = mlflow.active_run().info.run_id
 
     def __repr__(self):
-        return f"LoggedMetric(key={self.key}, value={self.value}, step={self.step}, timestamp={self.timestamp}, run_id={self.run_id})"
+        return f"LoggedMetric(key={self.key}, value={self.value}, step={self.step}, timestamp={self.timestamp}, run_id={self.run_id}, experiment_id={self.experiment_id})"
 
     def to_dict(self):
         """Convert to dictionary for easy logging/exporting."""
@@ -42,7 +53,8 @@ class LoggedMetric:
             "key": self.key,
             "value": self.value,
             "step": self.step,
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
+            "experiment_id": self.experiment_id
         }
 
 
@@ -95,6 +107,11 @@ class LoggedMetrics:
 class AutoLogger(ABC):
     def __init__(self):
         self.metrics_store = LoggedMetrics()
+        self.param_store = {}
+
+    @abstractmethod
+    def log_param(self, key: str, value, synchronous: bool | None = None):
+        pass
 
     @abstractmethod
     def log_metric(self, key: str, value: float, step: int | None = None,
@@ -111,6 +128,20 @@ class AutoLogger(ABC):
 
 # MLflow Logger Implementation
 class MLflowAutoLogger(AutoLogger):
+    def log_param(
+            self,
+            key: str,
+            value,
+            synchronous: bool | None = None):
+
+        if not mlflow_available:
+            print("[MLflowAutoLogger] MLflow is not installed. Skipping logging.")
+            return
+
+        self.param_store[key] = value
+
+        return _original_mlflow_log_param(key, value, synchronous)
+
     def log_metric(
             self,
             key: str,
@@ -190,6 +221,14 @@ class LoggerFactory:
 
 # Monkey-Patch mlflow.log_metric
 if mlflow_available:
+    def mlflow_log_param_wrapper(
+            key: str,
+            value,
+            synchronous: bool | None = None):
+        logger = LoggerFactory.get_logger("mlflow")
+        if logger:
+            logger.log_param(key, value, synchronous)
+
     def mlflow_log_metric_wrapper(
             key: str,
             value: float,
@@ -211,6 +250,7 @@ if mlflow_available:
         if logger:
             logger.log_metrics(metrics, step, synchronous, timestamp, run_id)
 
+    mlflow.log_param = mlflow_log_param_wrapper
     mlflow.log_metric = mlflow_log_metric_wrapper
     mlflow.log_metrics = mlflow_log_metrics_wrapper
 
