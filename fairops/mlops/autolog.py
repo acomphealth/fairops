@@ -105,9 +105,6 @@ class AutoLogger(ABC):
 
 # MLflow Logger Implementation
 class MLflowAutoLogger(AutoLogger):
-    def __init__(self):
-        self.logged_metrics = []
-
     def log_metric(
             self,
             key: str,
