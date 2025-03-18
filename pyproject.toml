@@ -2,9 +2,12 @@
 requires = ["setuptools", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+packages = ["fairops"]
+
 [tool.setuptools_scm]
 write_to = "fairops/version.py"
-version_scheme = "no-guess-dev"
+version_scheme = "post-release"
 local_scheme = "no-local-version"
 
 [project]
@@ -16,8 +19,8 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "requests (>=2.32.3,<3.0.0)",
-    "tqdm (>=4.67.1,<5.0.0)"
-
+    "tqdm (>=4.67.1,<5.0.0)",
+    "pandas (>=2.2.3,<3.0.0)"
 ]
 dynamic = ["version"]
 

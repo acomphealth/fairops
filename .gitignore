@@ -205,3 +205,5 @@ mlruns/*
 wandb/
 wandb/*
 .env
+
+version.py
