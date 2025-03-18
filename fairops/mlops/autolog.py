@@ -47,33 +47,48 @@ class AutoLogger(ABC):
         """
         combined_data = []
 
+        # Ensure param_store and metrics_store are not None and have data
+        params_list = self.param_store.to_dict() if self.param_store else []
+        metrics_list = self.metrics_store.to_dict() if self.metrics_store else []
+
         # Convert params data to a lookup dictionary {experiment_id -> {run_id -> [params_list]}}
         params_lookup = {
-            exp["experiment_id"]: {
-                run["run_id"]: run.get("parameters", [])
-                for run in exp["runs"]
+            exp.get("experiment_id"): {
+                run.get("run_id"): run.get("parameters", [])
+                for run in exp.get("runs", [])
             }
-            for exp in self.param_store.to_dict()
-        }
+            for exp in params_list
+        } if params_list else {}
 
         # Convert metrics data to a structured list
-        for exp in self.metrics_store.to_dict():
-            experiment_id = exp["experiment_id"]
-            for run in exp["runs"]:
-                run_id = run["run_id"]
+        for exp in metrics_list:
+            experiment_id = exp.get("experiment_id")
+            for run in exp.get("runs", []):
+                run_id = run.get("run_id")
 
                 # Fetch parameters if available, otherwise use an empty list
-                params_list = params_lookup.get(experiment_id, {}).get(run_id, [])
+                run_params_list = params_lookup.get(experiment_id, {}).get(run_id, [])
 
-                # Keep metrics in array format
-                metrics_list = run["metrics"]
+                # Fetch metrics if available, otherwise use an empty list
+                run_metrics_list = run.get("metrics", [])
 
                 combined_data.append({
                     "experiment_id": experiment_id,
                     "run_id": run_id,
-                    "params": params_list,
-                    "metrics": metrics_list
+                    "params": run_params_list,
+                    "metrics": run_metrics_list
                 })
+
+        # If metrics data is missing but params exist, include runs from params_store
+        if not combined_data and params_lookup:
+            for experiment_id, runs in params_lookup.items():
+                for run_id, params in runs.items():
+                    combined_data.append({
+                        "experiment_id": experiment_id,
+                        "run_id": run_id,
+                        "params": params,
+                        "metrics": []
+                    })
 
         return combined_data
 
