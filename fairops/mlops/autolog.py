@@ -99,12 +99,12 @@ class AutoLogger(ABC):
 
 # MLflow Logger Implementation
 class MLflowAutoLogger(AutoLogger):
-    def export_logs_as_artifact(self, base_path):
+    def export_logs_as_artifact(self, local_base_path, artifact_filename="results.json", artifact_path=None):
         experiment_id = mlflow.active_run().info.experiment_id
         run_id = mlflow.active_run().info.run_id
-        log_path = os.path.join(base_path, experiment_id, run_id)
+        log_path = os.path.join(local_base_path, experiment_id, run_id)
         os.makedirs(log_path, exist_ok=True)
-        log_file_path = os.path.join(log_path, "results.json")
+        log_file_path = os.path.join(log_path, artifact_filename)
         if os.path.exists(log_file_path):
             raise Exception(f"Log file path already exists {log_file_path}")
 
@@ -114,7 +114,7 @@ class MLflowAutoLogger(AutoLogger):
         if run_logs is not None:
             with open(log_file_path, "w") as log_file:
                 json.dump(run_logs, log_file, indent=4)
-            mlflow.log_artifact(log_file_path)
+            mlflow.log_artifact(log_file_path, artifact_path)
             os.remove(log_file_path)
 
     def log_param(
