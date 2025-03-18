@@ -14,6 +14,7 @@ wandb_available = importlib.util.find_spec("wandb") is not None
 if mlflow_available:
     import mlflow
     _original_mlflow_log_param = mlflow.log_param
+    _original_mlflow_log_params = mlflow.log_params
     _original_mlflow_log_metric = mlflow.log_metric
     _original_mlflow_log_metrics = mlflow.log_metrics
 else:
@@ -102,6 +103,10 @@ class AutoLogger(ABC):
         pass
 
     @abstractmethod
+    def log_params(self, params: dict[str, ], synchronous: bool | None = None, run_id: str | None = None):
+        pass
+
+    @abstractmethod
     def log_metric(self, key: str, value: float, step: int | None = None,
                    synchronous: bool | None = None, timestamp: int | None = None,
                    run_id: str | None = None):
@@ -139,6 +144,24 @@ class MLflowAutoLogger(AutoLogger):
 
         param = LoggedParam(key, value)
         self.param_store.add_param(param)
+
+        return param_result
+
+    def log_params(self, params: dict[str, ], synchronous: bool | None = None, run_id: str | None = None):
+
+        if not mlflow_available:
+            print("[MLflowAutoLogger] MLflow is not installed. Skipping logging.")
+            return
+
+        if run_id is not None:
+            # TODO: Update to specify run_id (only present in log_params, not log_param)
+            raise NotImplementedError("Autologging does not support parameter logging for non-active run")
+
+        param_result = _original_mlflow_log_params(params, synchronous, run_id)
+
+        for key, value in params.items():
+            param = LoggedParam(key, value)
+            self.param_store.add_param(param)
 
         return param_result
 
@@ -238,6 +261,11 @@ if mlflow_available:
         if logger:
             logger.log_param(key, value, synchronous)
 
+    def mlflow_log_params_wrapper(params: dict[str, ], synchronous: bool | None = None, run_id: str | None = None):
+        logger = LoggerFactory.get_logger("mlflow")
+        if logger:
+            logger.log_params(params, synchronous, run_id)
+
     def mlflow_log_metric_wrapper(
             key: str,
             value: float,
@@ -260,6 +288,7 @@ if mlflow_available:
             logger.log_metrics(metrics, step, synchronous, timestamp, run_id)
 
     mlflow.log_param = mlflow_log_param_wrapper
+    mlflow.log_params = mlflow_log_params_wrapper
     mlflow.log_metric = mlflow_log_metric_wrapper
     mlflow.log_metrics = mlflow_log_metrics_wrapper
 

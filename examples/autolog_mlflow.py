@@ -9,6 +9,10 @@ ml_logger = LoggerFactory.get_logger("mlflow")
 
 with mlflow.start_run() as run:
     mlflow.log_param("loss", 0.001)
+    mlflow.log_params({
+        "beta_1": 0.001,
+        "model_type": "nn"
+    })
 
     for step in range(5):
         mlflow.log_metric("accuracy", round(random.uniform(0.0, 0.99), 2), step=step)
