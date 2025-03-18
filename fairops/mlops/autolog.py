@@ -76,8 +76,25 @@ class AutoLogger(ABC):
 
         return combined_data
 
+    def generate_log_artifact(self, local_base_path, experiment_id, run_id, artifact_filename="results.json"):
+        log_path = os.path.join(local_base_path, experiment_id, run_id)
+        os.makedirs(log_path, exist_ok=True)
+        log_file_path = os.path.join(log_path, artifact_filename)
+        if os.path.exists(log_file_path):
+            raise Exception(f"Log file path already exists {log_file_path}")
+
+        logs = self.export_logs_to_dict()
+        run_logs = next((log for log in logs if log["experiment_id"] == experiment_id and log["run_id"] == run_id), None)
+
+        if run_logs is not None:
+            with open(log_file_path, "w") as log_file:
+                json.dump(run_logs, log_file, indent=4)
+            return log_file_path
+
+        return None
+
     @abstractmethod
-    def export_logs_as_artifact(self, base_path):
+    def export_logs_as_artifact(self, local_base_path, artifact_filename="results.json", artifact_path=None):
         pass
 
     @abstractmethod
@@ -102,18 +119,9 @@ class MLflowAutoLogger(AutoLogger):
     def export_logs_as_artifact(self, local_base_path, artifact_filename="results.json", artifact_path=None):
         experiment_id = mlflow.active_run().info.experiment_id
         run_id = mlflow.active_run().info.run_id
-        log_path = os.path.join(local_base_path, experiment_id, run_id)
-        os.makedirs(log_path, exist_ok=True)
-        log_file_path = os.path.join(log_path, artifact_filename)
-        if os.path.exists(log_file_path):
-            raise Exception(f"Log file path already exists {log_file_path}")
 
-        logs = self.export_logs_to_dict()
-        run_logs = next((log for log in logs if log["experiment_id"] == experiment_id and log["run_id"] == run_id), None)
-
-        if run_logs is not None:
-            with open(log_file_path, "w") as log_file:
-                json.dump(run_logs, log_file, indent=4)
+        log_file_path = self.generate_log_artifact(local_base_path, experiment_id, run_id, artifact_filename)
+        if log_file_path is not None:
             mlflow.log_artifact(log_file_path, artifact_path)
             os.remove(log_file_path)
 
