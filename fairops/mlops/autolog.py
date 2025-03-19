@@ -13,10 +13,12 @@ wandb_available = importlib.util.find_spec("wandb") is not None
 # Conditional imports
 if mlflow_available:
     import mlflow
+    from mlflow.entities import RunStatus
     _original_mlflow_log_param = mlflow.log_param
     _original_mlflow_log_params = mlflow.log_params
     _original_mlflow_log_metric = mlflow.log_metric
     _original_mlflow_log_metrics = mlflow.log_metrics
+    _original_mlflow_end_run = mlflow.end_run
 else:
     mlflow = None
 
@@ -110,6 +112,15 @@ class AutoLogger(ABC):
             return log_file_path
 
         return None
+
+    def clear_run_logs(self, experiment_id, run_id):
+        if experiment_id in self.metrics_store.metrics:
+            if run_id in self.metrics_store.metrics[experiment_id]:
+                del self.metrics_store.metrics[experiment_id][run_id]
+
+        if experiment_id in self.param_store.params:
+            if run_id in self.param_store.params[experiment_id]:
+                del self.param_store.params[experiment_id][run_id]
 
     @abstractmethod
     def export_logs_as_artifact(self, local_base_path, artifact_filename="results.json", artifact_path=None):
@@ -235,6 +246,16 @@ class MLflowAutoLogger(AutoLogger):
 
         return run_operation
 
+    def end_run(
+            self,
+            status: str = RunStatus.to_string(RunStatus.FINISHED)):
+
+        self.clear_run_logs(
+            mlflow.active_run().info.experiment_id,
+            mlflow.active_run().info.run_id
+        )
+        return _original_mlflow_end_run(status)
+
 
 # W&B Logger Implementation
 class WandbAutoLogger(AutoLogger):
@@ -304,10 +325,16 @@ if mlflow_available:
         if logger:
             logger.log_metrics(metrics, step, synchronous, timestamp, run_id)
 
+    def mlflow_end_run_wrapper(status: str = RunStatus.to_string(RunStatus.FINISHED)):
+        logger = LoggerFactory.get_logger("mlflow")
+        if logger:
+            logger.end_run(status)
+
     mlflow.log_param = mlflow_log_param_wrapper
     mlflow.log_params = mlflow_log_params_wrapper
     mlflow.log_metric = mlflow_log_metric_wrapper
     mlflow.log_metrics = mlflow_log_metrics_wrapper
+    mlflow.end_run = mlflow_end_run_wrapper
 
 # Monkey-Patch
 if wandb_available:
