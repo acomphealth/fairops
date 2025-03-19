@@ -46,6 +46,7 @@ class AutoLogger(ABC):
             str: JSON-formatted string.
         """
         combined_data = []
+        completed = []
 
         # Ensure param_store and metrics_store are not None and have data
         params_list = self.param_store.to_dict() if self.param_store else []
@@ -72,6 +73,7 @@ class AutoLogger(ABC):
                 # Fetch metrics if available, otherwise use an empty list
                 run_metrics_list = run.get("metrics", [])
 
+                completed.append(f"{experiment_id}{run_id}")
                 combined_data.append({
                     "experiment_id": experiment_id,
                     "run_id": run_id,
@@ -80,9 +82,9 @@ class AutoLogger(ABC):
                 })
 
         # If metrics data is missing but params exist, include runs from params_store
-        if not combined_data and params_lookup:
-            for experiment_id, runs in params_lookup.items():
-                for run_id, params in runs.items():
+        for experiment_id, runs in params_lookup.items():
+            for run_id, params in runs.items():
+                if f"{experiment_id}{run_id}" not in completed:
                     combined_data.append({
                         "experiment_id": experiment_id,
                         "run_id": run_id,
