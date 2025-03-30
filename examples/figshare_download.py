@@ -1,5 +1,5 @@
 import os
-from fairops.figshare.client import FigshareClient
+from fairops.repositories.figshare import FigshareClient
 from dotenv import load_dotenv
 
 
