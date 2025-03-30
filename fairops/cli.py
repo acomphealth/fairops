@@ -61,6 +61,9 @@ def publish_image(repo, tag, archive_path):
     repository_client = None
     if platform == "Zenodo":
         zenodo_token = os.getenv("ZENODO_API_TOKEN")
+        if zenodo_token is None:
+            raise Exception("ZENODO_API_TOKEN must be configured in .env file")
+
         repository_client = ZenodoClient(api_token=zenodo_token)
 
     title = click.prompt("Enter a title for the record/project")
