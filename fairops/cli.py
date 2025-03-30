@@ -1,6 +1,8 @@
 import click
+import questionary
 from fairops.devops.container import DockerImage
 from fairops.repositories.zenodo import ZenodoClient
+from fairops.repositories.figshare import FigshareClient
 from dotenv import load_dotenv
 import os
 
@@ -36,12 +38,10 @@ def load_image(archive_path):
 
 
 def select_platform():
-    platforms = ["Zenodo"]
-    click.echo("Select upload platform:")
-    for i, platform in enumerate(platforms, start=1):
-        click.echo(f"{i}. {platform.capitalize()}")
-    choice = click.prompt("Enter choice number", type=click.IntRange(1, len(platforms)))
-    return platforms[choice - 1]
+    return questionary.select(
+        "Select upload platform:",
+        choices=["Zenodo", "Figshare"]
+    ).ask()
 
 
 # TODO: Add documentation and consider fairops configure to log necessary tokens
@@ -59,12 +59,15 @@ def publish_image(repo, tag, archive_path):
     platform = select_platform()
 
     repository_client = None
-    if platform == "Zenodo":
-        zenodo_token = os.getenv("ZENODO_API_TOKEN")
-        if zenodo_token is None:
-            raise Exception("ZENODO_API_TOKEN must be configured in .env file")
+    repository_token = os.getenv(f"{platform.upper()}_API_TOKEN")
 
-        repository_client = ZenodoClient(api_token=zenodo_token)
+    if repository_token is None:
+        raise Exception(f"{platform.upper()}_API_TOKEN must be configured in .env file")
+
+    if platform == "Zenodo":
+        repository_client = ZenodoClient(api_token=repository_token)
+    elif platform == "Figshare":
+        repository_client = FigshareClient(api_token=repository_token)
 
     title = click.prompt("Enter a title for the record/project")
     description = click.prompt("Enter a description for the record/project")
@@ -82,9 +85,10 @@ def publish_image(repo, tag, archive_path):
 
     # Simulate upload behavior
     click.echo(f"🔗 Uploading to {platform}...")
-    repository_client.upload_files_to_project(
-        deposition_id=id,
-        file_paths=[archive_file_path]
+    repository_url = repository_client.upload_files_to_project(
+        project_id=id,
+        file_paths=[archive_file_path],
+        title=title
     )
     os.remove(archive_file_path)
-    click.echo("✅ Upload complete")
+    click.echo(f"✅ Upload complete: {repository_url}")

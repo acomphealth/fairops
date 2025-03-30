@@ -306,3 +306,5 @@ class FigshareClient:
                 file_info = self._initiate_new_upload(article_id, file_path)
                 self._upload_parts(file_path, file_info, files_pbar)
                 self._complete_upload(article_id, file_info['id'])
+
+        return f"https://figshare.com/account/items/{article_id}/edit"
