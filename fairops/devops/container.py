@@ -2,11 +2,13 @@ import docker
 import os
 
 
+# TODO: Add documentation
 class DockerImage:
     def __init__(self):
         self.client = docker.from_env()
 
     def package_image(self, repository, tag, output_path, remote=False):
+        # TODO: Add error handling
         if remote:
             self.client.images.pull(repository, tag)
 
@@ -23,6 +25,10 @@ class DockerImage:
         return archive_file
 
     def load_image(self, archive_path):
+        if not os.path.exists(archive_path):
+            raise Exception(f"Archive not found: {archive_path}")
+
+        # TODO: Add error handling
         with open(archive_path, 'rb') as f:
             images = self.client.images.load(f.read())
 

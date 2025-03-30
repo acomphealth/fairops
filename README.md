@@ -1,4 +1,5 @@
 # FAIRops
+[![PyPi Build Status](https://github.com/acomphealth/fairops/actions/workflows/ci.yml/badge.svg)](https://pypi.org/project/fairops/)
 
 
 # Ops for Biomedical AI/ML Demo

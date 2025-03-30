@@ -1,4 +1,3 @@
-import wandb
 from fairops.mlops.autolog import LoggerFactory
 
 
