@@ -1,15 +1,24 @@
 import docker
 import os
 
+import docker.errors
+
 
 # TODO: Add documentation
 class DockerImage:
     def __init__(self):
         self.client = docker.from_env()
 
-    def package_image(self, repository, tag, output_path, remote=False):
-        # TODO: Add error handling
-        if remote:
+    def image_exists_locally(self, repository: str, tag: str) -> bool:
+        image_name = f"{repository}:{tag}"
+        try:
+            self.client.images.get(image_name)
+            return True
+        except docker.errors.ImageNotFound:
+            return False
+
+    def package_image(self, repository, tag, output_path):
+        if not self.image_exists_locally(repository, tag):
             self.client.images.pull(repository, tag)
 
         image = self.client.images.get(f"{repository}:{tag}")
@@ -19,7 +28,7 @@ class DockerImage:
 
         # Save the image as a tar archive
         with open(archive_file, 'wb') as f:
-            for chunk in image.save(named=True):  # `named=True` ensures tag info is preserved
+            for chunk in image.save(named=True):  # named=True ensures tag info is preserved
                 f.write(chunk)
 
         return archive_file

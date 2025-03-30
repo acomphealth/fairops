@@ -52,12 +52,12 @@ class ZenodoClient:
 
         if response.status_code == 200:
             upload_url = response.json()['links']['bucket']
-            print(f"Upload URL: {upload_url}")
             return upload_url
         else:
             print(f"Error fetching upload URL: {response.text}")
             return None
 
+    # TODO: Return project url
     def upload_files_to_project(self, deposition_id, file_paths):
         """Upload a large file to Zenodo draft using PUT (streaming upload)."""
         upload_url = self._get_upload_url(deposition_id)
