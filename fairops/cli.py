@@ -86,5 +86,5 @@ def publish_image(repo, tag, archive_path):
         deposition_id=id,
         file_paths=[archive_file_path]
     )
-
+    os.remove(archive_file_path)
     click.echo("✅ Upload complete")
