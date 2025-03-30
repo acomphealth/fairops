@@ -4,6 +4,8 @@ import os
 from urllib.parse import urlencode
 
 
+# TODO: Add documentation and variable typing
+# TODO: Implement ABC
 class ZenodoClient:
     """
     A client for interacting with the Zenodo API to manage projects, articles, and file uploads/downloads.
@@ -118,8 +120,8 @@ class ZenodoClient:
             print(f"Error fetching record: {response.text}")
             return False
 
-    # From: https://github.com/space-physics/pyzenodo3/blob/main/src/pyzenodo3/base.py
-    def find_record_by_doi(self, doi: str):
+    # Based on: https://github.com/space-physics/pyzenodo3/blob/main/src/pyzenodo3/base.py
+    def _find_record_by_doi(self, doi: str):
         params = {"q": f"conceptdoi:{doi.replace('/', '\\/')}"}
         url = self.base_url + "records?" + urlencode(params)
         response = requests.get(url, headers=self.headers).json()
@@ -141,7 +143,7 @@ class ZenodoClient:
     def download_files_by_doi(self, doi, download_dir):
         """Download all files from a Zenodo record given its DOI."""
         # Get the record details using the DOI
-        record = self.find_record_by_doi(doi)
+        record = self._find_record_by_doi(doi)
 
         if record is not None:
             # Ensure download directory exists

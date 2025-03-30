@@ -8,6 +8,7 @@ from requests.exceptions import HTTPError
 from tqdm import tqdm
 
 
+# TODO: Implement ABC
 class FigshareClient:
     """
     A client for interacting with the Figshare API to manage projects, articles, and file uploads/downloads.
