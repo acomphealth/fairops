@@ -5,6 +5,7 @@ from fairops.repositories.zenodo import ZenodoClient
 from fairops.repositories.figshare import FigshareClient
 from dotenv import load_dotenv
 import os
+import tempfile
 
 
 @click.group()
@@ -81,14 +82,15 @@ def publish_image(repo, tag, archive_path):
     click.echo(f"\n📦 Preparing to upload {repo}:{tag} to {platform.capitalize()}")
 
     docker_image = DockerImage()
-    archive_file_path = docker_image.package_image(repo, tag, archive_path)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        archive_file_path = docker_image.package_image(repo, tag, tmpdir)
 
-    # Simulate upload behavior
-    click.echo(f"🔗 Uploading to {platform}...")
-    repository_url = repository_client.upload_files_to_project(
-        project_id=id,
-        file_paths=[archive_file_path],
-        title=title
-    )
-    os.remove(archive_file_path)
+        # Simulate upload behavior
+        click.echo(f"🔗 Uploading to {platform}...")
+        repository_url = repository_client.upload_files_to_project(
+            project_id=id,
+            file_paths=[archive_file_path],
+            title=title
+        )
+
     click.echo(f"✅ Upload complete: {repository_url}")
