@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# cellmaps_utils documentation build configuration file, created by
+# fairops documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun  9 13:47:02 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -163,7 +163,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (master_doc, 'fairops',
-     u'cellmaps_utils Documentation',
+     u'fairops Documentation',
      [author], 1)
 ]
 
@@ -174,10 +174,10 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'cellmaps_utils',
-     u'cellmaps_utils Documentation',
+    (master_doc, 'fairops',
+     u'fairops Documentation',
      author,
-     'cellmaps_utils',
+     'fairops',
      'One line description of project.',
      'Miscellaneous'),
 ]
