@@ -1,9 +1,6 @@
 fairops.mlops package
 =====================
 
-Submodules
-----------
-
 fairops.mlops.autolog module
 ----------------------------
 
@@ -16,14 +13,6 @@ fairops.mlops.models module
 ---------------------------
 
 .. automodule:: fairops.mlops.models
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: fairops.mlops
    :members:
    :show-inheritance:
    :undoc-members:

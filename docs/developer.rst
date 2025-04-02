@@ -1,10 +1,8 @@
 Developer Topics
 ====================
 
-This page contains topics related to development and
-deployment of **cellmaps_utils**
-
-
+This page contains topics related to development and 
+deployment of **fairops**
 
 .. toctree::
    :maxdepth: 2
@@ -13,6 +11,4 @@ deployment of **cellmaps_utils**
    contributing
    devbranches
    newrelease
-   pypircfile
-   integrationtesting
    versioningscheme

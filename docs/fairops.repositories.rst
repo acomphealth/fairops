@@ -1,9 +1,6 @@
 fairops.repositories package
 ============================
 
-Submodules
-----------
-
 fairops.repositories.figshare module
 ------------------------------------
 
@@ -16,14 +13,6 @@ fairops.repositories.zenodo module
 ----------------------------------
 
 .. automodule:: fairops.repositories.zenodo
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: fairops.repositories
    :members:
    :show-inheritance:
    :undoc-members:
