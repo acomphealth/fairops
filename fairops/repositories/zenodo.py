@@ -2,6 +2,26 @@ import requests
 import json
 import os
 from urllib.parse import urlencode
+from tqdm import tqdm
+
+
+class FileWithProgress:
+    def __init__(self, file_path, desc=None):
+        self.file = open(file_path, "rb")
+        self.total = os.path.getsize(file_path)
+        self.pbar = tqdm(total=self.total, unit="B", unit_scale=True, desc=desc or os.path.basename(file_path))
+
+    def __len__(self):
+        return self.total  # This helps requests verify size when Content-Length is set
+
+    def read(self, size=-1):
+        chunk = self.file.read(size)
+        self.pbar.update(len(chunk))
+        return chunk
+
+    def close(self):
+        self.file.close()
+        self.pbar.close()
 
 
 # TODO: Add documentation and variable typing
@@ -52,17 +72,17 @@ class ZenodoClient:
 
         if response.status_code == 200:
             upload_url = response.json()['links']['bucket']
-            print(f"Upload URL: {upload_url}")
             return upload_url
         else:
             print(f"Error fetching upload URL: {response.text}")
             return None
 
-    def upload_files_to_project(self, deposition_id, file_paths):
+    # TODO: Add doc reference that project_id == deposition_id for Zenodo
+    def upload_files_to_project(self, project_id, file_paths, title=None):
         """Upload a large file to Zenodo draft using PUT (streaming upload)."""
-        upload_url = self._get_upload_url(deposition_id)
+        upload_url = self._get_upload_url(project_id)
 
-        for file_path in file_paths:
+        for file_path in tqdm(file_paths, desc="Uploading files", unit="file"):
             file_size = os.path.getsize(file_path)
             file_name = os.path.basename(file_path)
 
@@ -74,17 +94,17 @@ class ZenodoClient:
                 'Content-Disposition': f'attachment; filename="{file_name}"'
             }
 
+            file_obj = FileWithProgress(file_path)
+
             # Open the file and stream it to Zenodo
-            with open(file_path, 'rb') as file:
-                response = requests.put(
-                    f"{upload_url}/{file_name}",
-                    headers=headers,
-                    data=file
-                )
+            response = requests.put(
+                f"{upload_url}/{file_name}",
+                headers=headers,
+                data=file_obj
+            )
 
             if response.status_code == 201:
-                print("File uploaded successfully.")
-                return response.json()
+                return f"https://zenodo.org/uploads/{project_id}"
             else:
                 print(f"Error uploading file: {response.status_code} - {response.text}")
                 return None
@@ -120,7 +140,8 @@ class ZenodoClient:
             print(f"Error fetching record: {response.text}")
             return False
 
-    # Based on: https://github.com/space-physics/pyzenodo3/blob/main/src/pyzenodo3/base.py
+    # Adapted from: https://github.com/space-physics/pyzenodo3/blob/main/src/pyzenodo3/base.py
+    # https://doi.org/10.5281/zenodo.3537730
     def _find_record_by_doi(self, doi: str):
         params = {"q": f"conceptdoi:{doi.replace('/', '\\/')}"}
         url = self.base_url + "records?" + urlencode(params)

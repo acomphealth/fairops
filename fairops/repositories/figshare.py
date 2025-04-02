@@ -285,6 +285,7 @@ class FigshareClient:
                 cur_part += 1
             parent_pbar.update(1)
 
+    # TODO: Return project or article url
     def upload_files_to_project(self, project_id: int, title: str, file_paths: list):
         """
         Upload multiple files to a Figshare project.
@@ -305,3 +306,5 @@ class FigshareClient:
                 file_info = self._initiate_new_upload(article_id, file_path)
                 self._upload_parts(file_path, file_info, files_pbar)
                 self._complete_upload(article_id, file_info['id'])
+
+        return f"https://figshare.com/account/items/{article_id}/edit"

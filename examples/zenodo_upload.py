@@ -14,6 +14,6 @@ project_id = zenodo.create_project(
 
 example_data_path = "data/example.json"
 zenodo.upload_files_to_project(
-    deposition_id=project_id,
+    project_id=project_id,
     file_paths=[example_data_path]
 )
