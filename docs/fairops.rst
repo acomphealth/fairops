@@ -3,6 +3,11 @@ fairops package
 
 Description of various functions and methods provided by this package.
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   fairops.mlops
 
 fairops.repositories.figshare module
 ------------------------------------
