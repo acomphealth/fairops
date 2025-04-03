@@ -1,6 +1,6 @@
-import docker
 import os
 
+import docker
 import docker.errors
 
 

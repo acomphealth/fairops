@@ -1,10 +1,11 @@
 import importlib
 import json
 import os
+import tempfile
 from abc import ABC, abstractmethod
 
-from fairops.mlops.models import (LoggedMetric, LoggedMetrics, LoggedParam,
-                                  LoggedParams)
+from .models import LoggedMetric, LoggedMetrics, LoggedParam, LoggedParams
+
 
 # Check for MLflow and W&B availability
 mlflow_available = importlib.util.find_spec("mlflow") is not None
@@ -123,7 +124,7 @@ class AutoLogger(ABC):
                 del self.param_store.params[experiment_id][run_id]
 
     @abstractmethod
-    def export_logs_as_artifact(self, local_base_path, artifact_filename="results.json", artifact_path=None):
+    def export_logs_as_artifact(self):
         pass
 
     @abstractmethod
@@ -149,14 +150,16 @@ class AutoLogger(ABC):
 
 # MLflow Logger Implementation
 class MLflowAutoLogger(AutoLogger):
-    def export_logs_as_artifact(self, local_base_path, artifact_filename="results.json", artifact_path=None):
+    def export_logs_as_artifact(self):
         experiment_id = mlflow.active_run().info.experiment_id
         run_id = mlflow.active_run().info.run_id
+        fairops_log_path = "trial_results.json"
 
-        log_file_path = self.generate_log_artifact(local_base_path, experiment_id, run_id, artifact_filename)
-        if log_file_path is not None:
-            mlflow.log_artifact(log_file_path, artifact_path)
-            os.remove(log_file_path)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            log_file_path = self.generate_log_artifact(tmpdir, experiment_id, run_id, fairops_log_path)
+            if log_file_path is not None:
+                mlflow.log_artifact(log_file_path, "fairops")
+                os.remove(log_file_path)
 
     def log_param(
             self,

@@ -27,6 +27,6 @@ with mlflow.start_run() as parent_run:
             }
 
             mlflow.log_metrics(test_metrics)
-            ml_logger.export_logs_as_artifact("data/results")
+            ml_logger.export_logs_as_artifact()
             mlflow.end_run()
-    ml_logger.export_logs_as_artifact("data/results")
+    ml_logger.export_logs_as_artifact()

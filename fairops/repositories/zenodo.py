@@ -1,7 +1,8 @@
-import requests
 import json
 import os
 from urllib.parse import urlencode
+
+import requests
 from tqdm import tqdm
 
 
@@ -38,7 +39,7 @@ class ZenodoClient:
             api_token (str): The Zenodo API token for authentication.
         """
         if api_token is None:
-            raise Exception("Zenodo API token must be set")
+            raise Exception("Zenodo API token must be set.")
 
         self.api_token = api_token
         self.base_url = "https://zenodo.org/api/"

@@ -20,11 +20,11 @@
 #
 import os
 import sys
-import re
+import re  # noqa: F401
 
 sys.path.insert(0, os.path.abspath('..'))
 
-import fairops
+import fairops  # noqa: F401, E402
 
 # -- General configuration ---------------------------------------------
 
@@ -41,12 +41,13 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx_copybutton']
 
 # intersphinx mapping
-intersphinx_mapping = {"python": ("https://docs.python.org/3", None),
-                       "requests": ("https://requests.readthedocs.io/en/latest/", None),
-                       "networkx": ("http://networkx.org/documentation/stable/", None),
-                       "pandas": ("https://pandas.pydata.org/docs/", None),
-                       "numpy": ("https://numpy.org/doc/stable/", None)
-                      }
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "requests": ("https://requests.readthedocs.io/en/latest/", None),
+    "networkx": ("http://networkx.org/documentation/stable/", None),
+    "pandas": ("https://pandas.pydata.org/docs/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None)
+}
 
 # prefix document on section labels for references
 autosectionlabel_prefix_document = True
@@ -76,7 +77,6 @@ author = u"FIX THIS"
 version = '0.1'
 # The full version, including alpha/beta/rc tags.
 release = '0.1.1'
-
 
 
 # automatically document constructor
@@ -181,6 +181,3 @@ texinfo_documents = [
      'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
