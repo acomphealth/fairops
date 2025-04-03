@@ -181,3 +181,15 @@ texinfo_documents = [
      'One line description of project.',
      'Miscellaneous'),
 ]
+
+
+def skip_member(app, what, name, obj, skip, options):
+    # Skip if explicitly marked private
+    if getattr(obj, '__private__', False):
+        return True
+
+    return skip  # Use default behavior
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip_member)

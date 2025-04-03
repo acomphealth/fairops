@@ -1,11 +1,13 @@
 import json
 import os
 from urllib.parse import urlencode
+from fairops.utils.decorators import private
 
 import requests
 from tqdm import tqdm
 
 
+@private
 class FileWithProgress:
     def __init__(self, file_path, desc=None):
         self.file = open(file_path, "rb")
@@ -48,7 +50,7 @@ class ZenodoClient:
             'Content-Type': 'application/json'
         }
 
-    def create_project(self, title, description):
+    def create_project(self, title: str, description: str):
         """Create a draft record in Zenodo."""
         url = f'{self.base_url}deposit/depositions'
         data = {
@@ -66,6 +68,7 @@ class ZenodoClient:
             print(f"Error creating draft: {response.text}")
             return None
 
+    @private
     def _get_upload_url(self, deposition_id):
         """Get the upload URL for a specific deposition using the deposition ID."""
         url = f'{self.base_url}deposit/depositions/{deposition_id}'
@@ -143,6 +146,7 @@ class ZenodoClient:
 
     # Adapted from: https://github.com/space-physics/pyzenodo3/blob/main/src/pyzenodo3/base.py
     # https://doi.org/10.5281/zenodo.3537730
+    @private
     def _find_record_by_doi(self, doi: str):
         params = {"q": f"conceptdoi:{doi.replace('/', '\\/')}"}
         url = self.base_url + "records?" + urlencode(params)
