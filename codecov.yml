@@ -7,16 +7,16 @@ component_management:
     - component_id: module_devops  # this is an identifier that should not be changed
       name: devops
       paths:
-        - devops/**
+        - fairops/devops/**
     - component_id: module_mlops
       name: mlops
       paths:
-        - mlops/**
+        - fairops/mlops/**
     - component_id: module_repositories
       name: repositories
       paths:
-        - repositories/**
+        - fairops/repositories/**
     - component_id: module_utils
       name: utils
       paths:
-        - utils/**
+        - fairops/utils/**
