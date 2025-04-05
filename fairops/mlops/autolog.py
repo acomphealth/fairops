@@ -4,6 +4,7 @@ import os
 import tempfile
 from abc import ABC, abstractmethod
 import shutil
+from typing import Union, Optional
 
 from .models import LoggedMetric, LoggedMetrics, LoggedParam, LoggedParams
 
@@ -247,11 +248,17 @@ class MLflowAutoLogger(AutoLogger):
 
                 child_run_ids = runs[runs['tags.mlflow.parentRunId'] == parent_run_id]['run_id'].tolist()
                 for child_run_id in child_run_ids:
-                    local_artifact_path = client.download_artifacts(
-                        child_run_id,
-                        fairops_artifact_path,
-                        trial_path
-                    )
+                    try:
+                        local_artifact_path = client.download_artifacts(
+                            child_run_id,
+                            fairops_artifact_path,
+                            trial_path
+                        )
+                    except Exception as ex:  # noqa: F841
+                        # TODO: add skipped child run to the results/metrics file but without only run id
+                        print(f"FAIROps trial metrics not found for run: {child_run_id}")
+                        pass
+
                     shutil.move(local_artifact_path, os.path.join(trial_path, f"{child_run_id}.json"))
 
                 with open(os.path.join(trial_path, "parent.json"), 'r') as f:
@@ -403,7 +410,7 @@ class LoggerFactory:
     _loggers = {}
 
     @staticmethod
-    def get_logger(name):
+    def get_logger(name) -> Optional[Union[MLflowAutoLogger, WandbAutoLogger]]:
         """Retrieves a logger, registering it automatically if needed."""
         if name not in LoggerFactory._loggers:
             if name == "mlflow" and mlflow_available:
