@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import re
+from fairops.utils.decorators import private
 
 import requests
 from requests.exceptions import HTTPError
@@ -28,6 +29,7 @@ class FigshareClient:
         self.headers = {"Authorization": f"token {self.api_token}"}
         self.chunk_size = 10485760  # 10MB
 
+    @private
     def _issue_request(self, method: str, url: str, data: dict = None, binary: bool = False, stream: bool = None):
         """
         Make an authenticated request to the Figshare API.
@@ -181,6 +183,7 @@ class FigshareClient:
         response = self._issue_request("POST", url, data=data)
         return response["entity_id"]
 
+    @private
     def _get_file_check_data(self, file_name: str):
         """
         Calculate the MD5 checksum and file size.
@@ -201,6 +204,7 @@ class FigshareClient:
                 data = fin.read(self.chunk_size)
             return md5.hexdigest(), size
 
+    @private
     def _initiate_new_upload(self, article_id: int, file_name: str):
         """
         Initiate a new file upload.
@@ -226,6 +230,7 @@ class FigshareClient:
 
         return result
 
+    @private
     def _complete_upload(self, article_id: int, file_id: int):
         """
         Complete an upload after all parts have been uploaded.
@@ -239,7 +244,8 @@ class FigshareClient:
             f'{self.base_url}/account/articles/{article_id}/files/{file_id}'
         )
 
-    def upload_part(self, file_info: dict, stream, part: dict):
+    @private
+    def _upload_part(self, file_info: dict, stream, part: dict):
         """
         Upload a part of a file.
 
@@ -257,6 +263,7 @@ class FigshareClient:
 
         self._issue_request('PUT', url, data=data, binary=True)
 
+    @private
     def _upload_parts(self, data_file: str, file_info: dict, parent_pbar):
         """
         Upload a file in chunks to Figshare.
@@ -277,7 +284,7 @@ class FigshareClient:
             leave=False
         ) as parts_pbar:
             for part in result['parts']:
-                self.upload_part(file_info, fin, part)
+                self._upload_part(file_info, fin, part)
 
                 uploaded_bytes = cur_part * self.chunk_size
                 part_size = min(self.chunk_size, file_size - uploaded_bytes)

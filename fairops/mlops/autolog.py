@@ -1,10 +1,12 @@
 import importlib
 import json
 import os
+import tempfile
 from abc import ABC, abstractmethod
+import shutil
 
-from fairops.mlops.models import (LoggedMetric, LoggedMetrics, LoggedParam,
-                                  LoggedParams)
+from .models import LoggedMetric, LoggedMetrics, LoggedParam, LoggedParams
+
 
 # Check for MLflow and W&B availability
 mlflow_available = importlib.util.find_spec("mlflow") is not None
@@ -34,6 +36,24 @@ class AutoLogger(ABC):
     def __init__(self):
         self.metrics_store = LoggedMetrics()
         self.param_store = LoggedParams()
+        self.fairops_log_path = "fairops"
+        self.fairops_log_file = "trial_results.json"
+
+    def parse_last_metrics(self, child_data):
+        last_metrics = {
+            "experiment_id": child_data["experiment_id"],
+            "experiment_name": child_data["experiment_name"],
+            "parent_run_id": child_data["parent_run_id"],
+            "run_id": child_data["run_id"],
+            "run_name": child_data["run_name"],
+            "params": {},
+            "last_metrics": child_data["last_metrics"].copy()
+        }
+
+        for param in child_data["params"]:
+            last_metrics["params"][param["key"]] = param["value"]
+
+        return last_metrics
 
     def export_logs_to_dict(self):
         """
@@ -76,22 +96,56 @@ class AutoLogger(ABC):
                 run_metrics_list = run.get("metrics", [])
 
                 completed.append(f"{experiment_id}{run_id}")
+
+                parent_run_id = None
+                parent_run = mlflow.get_parent_run(run_id)
+                if parent_run is not None:
+                    parent_run_id = parent_run.info.run_id
+
+                metrics_last = {}
+                for metric in run_metrics_list:
+                    key = metric["key"]
+                    steps = metric["steps"]
+
+                    valid_steps = [s for s in steps if s["step"] is not None]
+                    if valid_steps:
+                        # Get the one with the largest step
+                        last = max(valid_steps, key=lambda x: x["step"])
+                    else:
+                        # No valid steps, take last item
+                        last = steps[-1]
+
+                    metrics_last[key] = last["value"]
+
                 combined_data.append({
                     "experiment_id": experiment_id,
+                    "experiment_name": mlflow.get_experiment(experiment_id).name,
+                    "parent_run_id": parent_run_id,
                     "run_id": run_id,
+                    "run_name": mlflow.get_run(run_id).info.run_name,
                     "params": run_params_list,
-                    "metrics": run_metrics_list
+                    "metrics": run_metrics_list,
+                    "last_metrics": metrics_last
                 })
 
         # If metrics data is missing but params exist, include runs from params_store
         for experiment_id, runs in params_lookup.items():
             for run_id, params in runs.items():
                 if f"{experiment_id}{run_id}" not in completed:
+                    parent_run_id = None
+                    parent_run = mlflow.get_parent_run(run_id)
+                    if parent_run is not None:
+                        parent_run_id = parent_run.info.run_id
+
                     combined_data.append({
                         "experiment_id": experiment_id,
+                        "experiment_name": mlflow.get_experiment(experiment_id).name,
+                        "parent_run_id": parent_run_id,
                         "run_id": run_id,
+                        "run_name": mlflow.get_run(run_id).info.run_name,
                         "params": params,
-                        "metrics": []
+                        "metrics": [],
+                        "last_metrics": {}
                     })
 
         return combined_data
@@ -123,7 +177,11 @@ class AutoLogger(ABC):
                 del self.param_store.params[experiment_id][run_id]
 
     @abstractmethod
-    def export_logs_as_artifact(self, local_base_path, artifact_filename="results.json", artifact_path=None):
+    def get_experiment_metrics(self):
+        pass
+
+    @abstractmethod
+    def export_logs_as_artifact(self):
         pass
 
     @abstractmethod
@@ -149,14 +207,84 @@ class AutoLogger(ABC):
 
 # MLflow Logger Implementation
 class MLflowAutoLogger(AutoLogger):
-    def export_logs_as_artifact(self, local_base_path, artifact_filename="results.json", artifact_path=None):
+    # Refactor this to an AutoLogger method for wandb+mlflow where appropriate
+    def get_experiment_metrics(
+            self,
+            tracking_uri=None,
+            experiment_name=None,
+            parent_run_ids=None,
+            output_path=None
+    ):
+        fairops_artifact_path = os.path.join(self.fairops_log_path, self.fairops_log_file)
+
+        if tracking_uri is not None:
+            mlflow.set_tracking_uri(tracking_uri=tracking_uri)
+
+        client = mlflow.MlflowClient()
+        if experiment_name is not None:
+            mlflow.set_experiment(experiment_name=experiment_name)
+
+        if parent_run_ids is None:
+            runs = mlflow.search_runs()[["run_id", "tags.mlflow.parentRunId"]]
+            parent_run_ids = runs[runs['tags.mlflow.parentRunId'].isnull()]['run_id'].tolist()
+
+        for parent_run_id in parent_run_ids:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                trial_path = os.path.join(tmpdir, parent_run_id)
+                if output_path is None:
+                    output_path = trial_path
+                else:
+                    os.makedirs(output_path, exist_ok=True)
+
+                os.makedirs(trial_path)
+
+                local_artifact_path = client.download_artifacts(
+                    parent_run_id,
+                    fairops_artifact_path,
+                    trial_path
+                )
+                shutil.move(local_artifact_path, os.path.join(trial_path, "parent.json"))
+
+                child_run_ids = runs[runs['tags.mlflow.parentRunId'] == parent_run_id]['run_id'].tolist()
+                for child_run_id in child_run_ids:
+                    local_artifact_path = client.download_artifacts(
+                        child_run_id,
+                        fairops_artifact_path,
+                        trial_path
+                    )
+                    shutil.move(local_artifact_path, os.path.join(trial_path, f"{child_run_id}.json"))
+
+                with open(os.path.join(trial_path, "parent.json"), 'r') as f:
+                    parent_data = json.load(f)
+                    trial_results_path = os.path.join(output_path, f"trial_results_{parent_run_id}.jsonl")
+                    trial_metrics_path = os.path.join(output_path, f"trial_metrics_{parent_run_id}.json")
+
+                    last_metrics = []
+                    with open(trial_results_path, 'w') as out_f:
+                        out_f.write(json.dumps(parent_data) + "\n")
+
+                        for child_run_id in child_run_ids:
+                            child_artifact = os.path.join(trial_path, f"{child_run_id}.json")
+                            with open(child_artifact, 'r') as child_f:
+                                child_data = json.load(child_f)
+                                child_last_metrics = self.parse_last_metrics(child_data)
+                                last_metrics.append(child_last_metrics)
+                                out_f.write(json.dumps(child_data) + "\n")
+
+                    with open(trial_metrics_path, 'w') as metric_out_f:
+                        json.dump(last_metrics, metric_out_f, indent=4)
+
+        return
+
+    def export_logs_as_artifact(self):
         experiment_id = mlflow.active_run().info.experiment_id
         run_id = mlflow.active_run().info.run_id
 
-        log_file_path = self.generate_log_artifact(local_base_path, experiment_id, run_id, artifact_filename)
-        if log_file_path is not None:
-            mlflow.log_artifact(log_file_path, artifact_path)
-            os.remove(log_file_path)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            log_file_path = self.generate_log_artifact(tmpdir, experiment_id, run_id, self.fairops_log_file)
+            if log_file_path is not None:
+                mlflow.log_artifact(log_file_path, self.fairops_log_path)
+                os.remove(log_file_path)
 
     def log_param(
             self,
@@ -176,7 +304,6 @@ class MLflowAutoLogger(AutoLogger):
         return param_result
 
     def log_params(self, params: dict[str, ], synchronous: bool | None = None, run_id: str | None = None):
-
         if not mlflow_available:
             print("[MLflowAutoLogger] MLflow is not installed. Skipping logging.")
             return

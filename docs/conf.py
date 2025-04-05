@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# cellmaps_utils documentation build configuration file, created by
+# fairops documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun  9 13:47:02 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -20,11 +20,11 @@
 #
 import os
 import sys
-import re
+import re  # noqa: F401
 
 sys.path.insert(0, os.path.abspath('..'))
 
-import fairops
+import fairops  # noqa: F401, E402
 
 # -- General configuration ---------------------------------------------
 
@@ -41,12 +41,13 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx_copybutton']
 
 # intersphinx mapping
-intersphinx_mapping = {"python": ("https://docs.python.org/3", None),
-                       "requests": ("https://requests.readthedocs.io/en/latest/", None),
-                       "networkx": ("http://networkx.org/documentation/stable/", None),
-                       "pandas": ("https://pandas.pydata.org/docs/", None),
-                       "numpy": ("https://numpy.org/doc/stable/", None)
-                      }
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "requests": ("https://requests.readthedocs.io/en/latest/", None),
+    "networkx": ("http://networkx.org/documentation/stable/", None),
+    "pandas": ("https://pandas.pydata.org/docs/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None)
+}
 
 # prefix document on section labels for references
 autosectionlabel_prefix_document = True
@@ -76,7 +77,6 @@ author = u"FIX THIS"
 version = '0.1'
 # The full version, including alpha/beta/rc tags.
 release = '0.1.1'
-
 
 
 # automatically document constructor
@@ -163,7 +163,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (master_doc, 'fairops',
-     u'cellmaps_utils Documentation',
+     u'fairops Documentation',
      [author], 1)
 ]
 
@@ -174,13 +174,22 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'cellmaps_utils',
-     u'cellmaps_utils Documentation',
+    (master_doc, 'fairops',
+     u'fairops Documentation',
      author,
-     'cellmaps_utils',
+     'fairops',
      'One line description of project.',
      'Miscellaneous'),
 ]
 
 
+def skip_member(app, what, name, obj, skip, options):
+    # Skip if explicitly marked private
+    if getattr(obj, '__private__', False):
+        return True
 
+    return skip  # Use default behavior
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip_member)
