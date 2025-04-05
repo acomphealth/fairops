@@ -7,7 +7,13 @@ import docker.errors
 # TODO: Add documentation
 class DockerImage:
     def __init__(self):
-        self.client = docker.from_env()
+        try:
+            self.client = docker.from_env()
+            self.client.ping()
+        except docker.errors.DockerException as e:
+            raise RuntimeError(
+                "Docker is not available. Please ensure Docker is installed and the daemon is running."
+            ) from e
 
     def image_exists_locally(self, repository: str, tag: str) -> bool:
         image_name = f"{repository}:{tag}"

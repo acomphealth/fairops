@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Integration Dependencies
         run: |
-          pip install mlflow
+          pip install -r requirements_dev.txt
 
       - name: Run Unit/Integration Tests
         run: |
