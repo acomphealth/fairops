@@ -3,7 +3,6 @@ import unittest
 import tempfile
 import shutil
 from docker.errors import ImageNotFound
-import hashlib
 
 from fairops.devops.container import DockerImage
 
