@@ -1,6 +1,9 @@
 name: Build, Test, and Coverage Report
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -22,21 +25,22 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .  # adjust if needed
-          pip install coverage mlflow
+          pip install coverage mlflow unittest-xml-reporting
 
       - name: Run Unit Tests with Coverage
         run: |
-          coverage run -m unittest discover -s tests
+          coverage run -m xmlrunner discover -s tests -o test-reports
           coverage report
           coverage xml
 
-      - name: Upload Coverage Report Artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
         with:
-          name: coverage-report
-          path: coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload to Codecov
+        if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v4
         with:
           files: coverage.xml
