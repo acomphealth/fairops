@@ -1,7 +1,7 @@
 # FAIRops
 [![PyPi Build Status](https://github.com/acomphealth/fairops/actions/workflows/ci.yml/badge.svg)](https://pypi.org/project/fairops/)
 
-[![CodeCov Status](https://codecov.io/github/codecov/gh/acomphealth/main/graph/badge.svg)](https://codecov.io/gh/acomphealth/fairops)
+[![CodeCov Status](https://codecov.io/gh/acomphealth/fairops/graph/badge.svg)](https://codecov.io/gh/acomphealth/fairops)
 
 [![ReadTheDocs](https://readthedocs.org/projects/fairops/badge/?version=latest)](https://fairops.readthedocs.io/en/latest/?badge=latest)
 
