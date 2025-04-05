@@ -217,7 +217,10 @@ class MLflowAutoLogger(AutoLogger):
     ):
         fairops_artifact_path = os.path.join(self.fairops_log_path, self.fairops_log_file)
 
-        client = mlflow.MlflowClient(tracking_uri=tracking_uri)
+        if tracking_uri is not None:
+            mlflow.set_tracking_uri(tracking_uri=tracking_uri)
+
+        client = mlflow.MlflowClient()
         if experiment_name is not None:
             mlflow.set_experiment(experiment_name=experiment_name)
 
