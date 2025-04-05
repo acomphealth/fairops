@@ -25,9 +25,13 @@ jobs:
       - name: Verify Version from `setuptools_scm`
         run: python -c "import setuptools_scm; print(setuptools_scm.get_version())"
 
-      - name: Run Unit Tests
+      - name: Install Integration Dependencies
         run: |
-          python -m unittest discover -s tests
+          pip install mlflow
+
+      - name: Run Unit/Integration Tests
+        run: |
+          python -m unittest discover -s tests -p "int_test_*.py"
 
       - name: Build and Publish to PyPI
         env:
