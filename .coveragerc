@@ -1,10 +1,13 @@
 [run]
 source = fairops
+branch = True
+
+[report]
 omit =
     */tests/*
     */*_test_*.py
-
-[report]
+include =
+    fairops/*
 exclude_lines =
     if __name__ == .__main__.:
     pragma: no cover

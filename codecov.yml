@@ -1,3 +1,5 @@
+comment:
+  layout: "header, diff, flags, components"
 component_management:
   default_rules:  # default rules that will be inherited by all components
     statuses:
@@ -7,16 +9,16 @@ component_management:
     - component_id: module_devops  # this is an identifier that should not be changed
       name: devops
       paths:
-        - fairops/devops/**
+        - fairops/devops/
     - component_id: module_mlops
       name: mlops
       paths:
-        - fairops/mlops/**
+        - fairops/mlops/
     - component_id: module_repositories
       name: repositories
       paths:
-        - fairops/repositories/**
+        - fairops/repositories/
     - component_id: module_utils
       name: utils
       paths:
-        - fairops/utils/**
+        - fairops/utils/
