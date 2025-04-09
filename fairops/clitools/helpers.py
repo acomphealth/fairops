@@ -44,7 +44,7 @@ def get_env_path(create_if_not_exist=False):
             break
 
     if selected_env is None and create_if_not_exist:
-        selected_env = env_path["home_config"]
+        selected_env = env_paths["home_config"]
         os.makedirs(os.path.dirname(selected_env))
 
     return selected_env
