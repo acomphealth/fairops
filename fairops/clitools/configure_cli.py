@@ -1,7 +1,7 @@
 import click
 from dotenv import set_key, get_key
 from .helpers import select_repository
-from utils.envpath import get_env_path
+from fairops.utils.envpath import get_env_path
 
 
 @click.command("repository")

@@ -213,6 +213,7 @@ class MLflowAutoLogger(AutoLogger):
             self,
             tracking_uri=None,
             experiment_name=None,
+            experiment_id=None,
             parent_run_ids=None,
             output_path=None
     ):
@@ -224,6 +225,8 @@ class MLflowAutoLogger(AutoLogger):
         client = mlflow.MlflowClient()
         if experiment_name is not None:
             mlflow.set_experiment(experiment_name=experiment_name)
+        elif experiment_id is not None:
+            mlflow.set_experiment(experiment_id=experiment_id)
 
         if parent_run_ids is None:
             runs = mlflow.search_runs()[["run_id", "tags.mlflow.parentRunId"]]

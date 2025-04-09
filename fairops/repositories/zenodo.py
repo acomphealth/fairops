@@ -84,9 +84,9 @@ class ZenodoClient:
     # TODO: Add doc reference that project_id == deposition_id for Zenodo
     def upload_files_to_project(self, project_id, file_paths, title=None):
         """Upload a large file to Zenodo draft using PUT (streaming upload)."""
-        upload_url = self._get_upload_url(project_id)
-
+        success = True
         for file_path in tqdm(file_paths, desc="Uploading files", unit="file"):
+            upload_url = self._get_upload_url(project_id)
             file_size = os.path.getsize(file_path)
             file_name = os.path.basename(file_path)
 
@@ -107,11 +107,19 @@ class ZenodoClient:
                 data=file_obj
             )
 
-            if response.status_code == 201:
-                return f"https://zenodo.org/uploads/{project_id}"
-            else:
-                print(f"Error uploading file: {response.status_code} - {response.text}")
-                return None
+            if response.status_code != 201:
+                success = False
+        
+        if success:
+            result = {
+                "url": f"https://zenodo.org/uploads/{project_id}",
+                "article_id": None,
+                "project_id": project_id
+            }
+            return result
+        else:
+            print(f"Error uploading file: https://zenodo.org/uploads/{project_id}")
+            return None
 
     def download_files_by_id(self, record_id, download_path):
         """Download a file from Zenodo."""

@@ -324,6 +324,7 @@ class FigshareClient:
                 self._complete_upload(article_id, file_info['id'])
 
         result = {
+            "project_id": project_id,
             "article_id": article_id,
             "url": f"https://figshare.com/account/items/{article_id}/edit"
         }
