@@ -1,6 +1,6 @@
 import os
 from fairops.repositories.zenodo import ZenodoClient
-from dotenv import load_dotenv
+from fairops.utils.envpath import load_fairops_env
 
 
 def download_data_doi(zenodo_api_token, zenodo_doi, output_path):
@@ -24,7 +24,7 @@ def download_data_id(zenodo_api_token, zenodo_record_id, output_path):
 
 
 if __name__ == "__main__":
-    load_dotenv()
+    load_fairops_env()
 
     zenodo_api_token = os.getenv("ZENODO_API_TOKEN")
     zenodo_doi = os.getenv("ZENODO_DOI")

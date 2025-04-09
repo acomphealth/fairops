@@ -146,6 +146,11 @@ class FigshareClient:
 
         return self.download_files(article_id, output_path)
 
+    def delete_project(self, project_id: int):
+        url = f"{self.base_url}/account/projects/{project_id}"
+        self._issue_request("DELETE", url)
+        return project_id
+
     def create_project(self, title: str, description: str) -> int:
         """
         Create a new project on Figshare.
@@ -182,6 +187,11 @@ class FigshareClient:
 
         response = self._issue_request("POST", url, data=data)
         return response["entity_id"]
+
+    def delete_article(self, article_id: int):
+        url = f"{self.base_url}/account/articles/{article_id}"
+        self._issue_request("DELETE", url)
+        return article_id
 
     @private
     def _get_file_check_data(self, file_name: str):
@@ -292,7 +302,6 @@ class FigshareClient:
                 cur_part += 1
             parent_pbar.update(1)
 
-    # TODO: Return project or article url
     def upload_files_to_project(self, project_id: int, title: str, file_paths: list):
         """
         Upload multiple files to a Figshare project.
@@ -314,4 +323,9 @@ class FigshareClient:
                 self._upload_parts(file_path, file_info, files_pbar)
                 self._complete_upload(article_id, file_info['id'])
 
-        return f"https://figshare.com/account/items/{article_id}/edit"
+        result = {
+            "article_id": article_id,
+            "url": f"https://figshare.com/account/items/{article_id}/edit"
+        }
+
+        return result
