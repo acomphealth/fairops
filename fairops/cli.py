@@ -1,6 +1,7 @@
 import click
 from fairops.clitools import docker_cli
 from fairops.clitools import configure_cli
+from fairops.clitools import mlops_cli
 from fairops.utils.envpath import load_fairops_env
 from dotenv import load_dotenv
 
@@ -30,6 +31,15 @@ def docker():
 docker.add_command(docker_cli.package_image)
 docker.add_command(docker_cli.load_image)
 docker.add_command(docker_cli.publish_image)
+
+
+@cli.group()
+def mlops():
+    """MLOps-related commands"""
+    load_fairops_env()
+
+
+mlops.add_command(mlops_cli.publish_experiment)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,13 @@ from fairops.repositories.figshare import FigshareClient
 from fairops.repositories.zenodo import ZenodoClient
 
 
+def select_mlops_library():
+    return questionary.select(
+        "Select MLOps library:",
+        choices=["MLFlow", "WandB"]
+    ).ask()
+
+
 def select_repository():
     return questionary.select(
         "Select upload platform:",
