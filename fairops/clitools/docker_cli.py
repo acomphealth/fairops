@@ -51,10 +51,10 @@ def publish_image(repo, tag):
         archive_file_path = docker_image.package_image(repo, tag, tmpdir)
 
         click.echo(f"🔗 Uploading to {repository}...")
-        repository_url = repository_client.upload_files_to_project(
+        repository_result = repository_client.upload_files_to_project(
             project_id=id,
             file_paths=[archive_file_path],
             title=title
         )
 
-    click.echo(f"✅ Upload complete: {repository_url}")
+    click.echo(f"✅ Upload complete: {repository_result['url']}")

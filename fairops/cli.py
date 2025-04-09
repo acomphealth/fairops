@@ -1,7 +1,7 @@
 import click
 from fairops.clitools import docker_cli
 from fairops.clitools import configure_cli
-from fairops.clitools.helpers import get_env_path
+from fairops.utils.envpath import load_fairops_env
 from dotenv import load_dotenv
 
 
@@ -24,12 +24,7 @@ configure.add_command(configure_cli.which)
 @cli.group()
 def docker():
     """Docker-related commands"""
-    env_path = get_env_path()
-    if env_path is not None:
-        load_dotenv(env_path, override=True)
-    else:
-        click.echo("Warning: No environment config found.")
-    pass
+    load_fairops_env()
 
 
 docker.add_command(docker_cli.package_image)

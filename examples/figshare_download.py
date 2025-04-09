@@ -1,6 +1,6 @@
 import os
 from fairops.repositories.figshare import FigshareClient
-from dotenv import load_dotenv
+from fairops.utils.envpath import load_fairops_env
 
 
 def download_data(figshare_api_token, figshare_doi, output_path):
@@ -14,7 +14,7 @@ def download_data(figshare_api_token, figshare_doi, output_path):
 
 
 if __name__ == "__main__":
-    load_dotenv()
+    load_fairops_env()
 
     figshare_api_token = os.getenv("FIGSHARE_API_TOKEN")
     figshare_doi = os.getenv("FIGSHARE_DOI")

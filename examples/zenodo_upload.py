@@ -1,9 +1,9 @@
 from fairops.repositories.zenodo import ZenodoClient
-from dotenv import load_dotenv
+from fairops.utils.envpath import load_fairops_env
 import os
 
 
-load_dotenv()
+load_fairops_env()
 zenodo_token = os.getenv("ZENODO_API_TOKEN")
 zenodo = ZenodoClient(api_token=zenodo_token)
 
