@@ -3,12 +3,12 @@ import click
 import os
 
 from fairops.mlops.autolog import LoggerFactory
-from .helpers import select_mlops_library, select_repository, get_repository_client
+from .helpers import select_mlops_library, select_repository, get_repository_client, generate_crate_from_exp
 
 
 @click.command("publish")
 def publish_experiment():
-    """Publish an MLOps experiment to a repository"""
+    """Publish an MLOps experiment RoCrate to a repository"""
 
     repository = select_repository()
     repository_client = get_repository_client(repository)
@@ -36,10 +36,12 @@ def publish_experiment():
 
         ml_logger.get_experiment_metrics(output_path=tmpdir)
 
+        exp_crate = generate_crate_from_exp(tmpdir, compress=False)
+
         experiment_files = []
-        for filename in os.listdir(tmpdir):
-            experiment_files.append(os.path.join(tmpdir, filename))
-        
+        for filename in os.listdir(exp_crate):
+            experiment_files.append(os.path.join(exp_crate, filename))
+
         id = repository_client.create_project(
                 title=title,
                 description=description
@@ -48,7 +50,7 @@ def publish_experiment():
         repository_result = repository_client.upload_files_to_project(
             project_id=id,
             file_paths=experiment_files,
-            title=title
+            title=f"FAIROps MLOps Crate for Experiment {experiment_id}"
         )
 
         click.echo(f"✅ Upload complete: {repository_result['url']}")
