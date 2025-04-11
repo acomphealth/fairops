@@ -44,6 +44,7 @@ opentelemetry-sdk==1.31.0
 opentelemetry-semantic-conventions==0.52b0
 packaging==24.2
 pandas==2.2.3
+parameterized==0.9.0
 pillow==11.1.0
 platformdirs==4.3.6
 protobuf==5.29.3

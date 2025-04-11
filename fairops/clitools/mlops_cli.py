@@ -1,8 +1,11 @@
 import tempfile
 import click
 import os
+import re
+import pandas as pd
 
 from fairops.mlops.autolog import LoggerFactory
+from fairops.mlops.helpers import ResultsHelper
 from .helpers import select_mlops_library, select_repository, get_repository_client, generate_crate_from_exp
 
 
@@ -54,3 +57,39 @@ def publish_experiment():
         )
 
         click.echo(f"✅ Upload complete: {repository_result['url']}")
+
+@click.command("visualize")
+@click.argument("record_id")
+@click.option("--private", is_flag=True)
+def visualize(record_id, private):
+    """Publish an MLOps experiment RoCrate to a repository"""
+
+    print(record_id)
+    repository = select_repository()
+    repository_client = get_repository_client(repository)
+
+    metrics_pattern = re.compile(r"^trial_metrics_[a-fA-F0-9]+\.json$")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        repository_client.download_files_by_id(
+            record_id=record_id,
+            download_path=tmpdir,
+            private=private
+        )
+
+        # List and search
+        results_helper = ResultsHelper()
+        results = None
+        filenames = os.listdir(tmpdir)
+
+        for filename in filenames:
+            if metrics_pattern.match(filename):
+                metrics_path = os.path.join(tmpdir, filename)
+                cur_results = results_helper.metrics_to_dataframe(metrics_path)
+                
+                if results is None:
+                    results = cur_results.copy()
+                else:
+                    results = pd.concat([results, cur_results], ignore_index=True)
+
+        print(results.head())

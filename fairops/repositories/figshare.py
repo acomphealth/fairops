@@ -69,7 +69,7 @@ class FigshareClient:
 
         return data
 
-    def download_files(self, article_id: int, output_path: str) -> str:
+    def download_files_by_id(self, article_id: int, output_path: str, private=False) -> str:
         """
         Download all files associated with an article.
 
@@ -144,7 +144,7 @@ class FigshareClient:
             print("Article not found")
             return None
 
-        return self.download_files(article_id, output_path)
+        return self.download_files_by_id(article_id, output_path)
 
     def delete_project(self, project_id: int):
         url = f"{self.base_url}/account/projects/{project_id}"
