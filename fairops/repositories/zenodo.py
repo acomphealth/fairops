@@ -166,7 +166,8 @@ class ZenodoClient:
     # https://doi.org/10.5281/zenodo.3537730
     @private
     def _find_record_by_doi(self, doi: str):
-        params = {"q": f"conceptdoi:{doi.replace('/', '\\/')}"}
+        doi_clean = doi.replace('/', '\\/')
+        params = {"q": f"conceptdoi:{doi_clean}"}
         url = self.base_url + "records?" + urlencode(params)
         response = requests.get(url, headers=self.headers).json()
         hits = response["hits"]["hits"]
@@ -174,7 +175,7 @@ class ZenodoClient:
         if len(hits) > 0:
             return hits[0]
         else:
-            params = {"q": f"doi:{doi.replace('/', '\\/')}"}
+            params = {"q": f"doi:{doi_clean}"}
             url = self.base_url + "records?" + urlencode(params)
             response = requests.get(url, headers=self.headers).json()
             hits = response["hits"]["hits"]
