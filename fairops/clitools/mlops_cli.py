@@ -58,6 +58,7 @@ def publish_experiment():
 
         click.echo(f"✅ Upload complete: {repository_result['url']}")
 
+# TODO: Update docs for this
 @click.command("visualize")
 @click.argument("record_id")
 @click.option("--private", is_flag=True)
