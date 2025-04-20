@@ -27,6 +27,7 @@ class FileWithProgress:
         self.pbar.close()
 
 
+# TODO: Change from using project ID (from attempt to match figshare) to be article ID
 # TODO: Add documentation and variable typing
 # TODO: Implement ABC
 class ZenodoClient:
@@ -113,7 +114,7 @@ class ZenodoClient:
         if success:
             result = {
                 "url": f"https://zenodo.org/uploads/{project_id}",
-                "article_id": None,
+                "article_id": project_id,
                 "project_id": project_id
             }
             return result
@@ -121,36 +122,45 @@ class ZenodoClient:
             print(f"Error uploading file: https://zenodo.org/uploads/{project_id}")
             return None
 
-    def download_files_by_id(self, record_id, download_path):
+    def download_files_by_id(self, record_id, download_path, private=False):
         """Download a file from Zenodo."""
         url = f'{self.base_url}records/{record_id}'
+        if private:
+            url = f'{self.base_url}deposit/depositions/{record_id}/files'
+
         response = requests.get(url, headers=self.headers)
 
         if response.status_code == 200:
             record = response.json()
             file_url = None
+            files = None
+            if private:
+                files = record
+            else:
+                files = record['files']
 
             # Find the file URL in the response
-            for file in record['files']:
+            for file in files:
                 file_url = file['links']['download']
+                filename = file['filename']
 
                 if file_url:
-                    file_data = requests.get(file_url)
+                    file_data = requests.get(file_url, headers=self.headers)
 
                     if file_data.status_code == 200:
-                        with open(download_path, 'wb') as f:
+                        with open(os.path.join(download_path, filename), 'wb') as f:
                             f.write(file_data.content)
-                        print(f"File downloaded to {download_path}")
-                        return True
                     else:
                         print(f"Error downloading file: {file_data.text}")
                         return False
-            else:
-                print("File ID not found in record.")
-                return False
+                else:
+                    print("File ID not found in record.")
+                    return False
         else:
             print(f"Error fetching record: {response.text}")
             return False
+        
+        return True
 
     # Adapted from: https://github.com/space-physics/pyzenodo3/blob/main/src/pyzenodo3/base.py
     # https://doi.org/10.5281/zenodo.3537730

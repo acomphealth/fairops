@@ -40,7 +40,7 @@ def mlops():
 
 
 mlops.add_command(mlops_cli.publish_experiment)
-
+mlops.add_command(mlops_cli.visualize)
 
 if __name__ == "__main__":
     cli()
