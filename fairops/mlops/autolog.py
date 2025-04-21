@@ -10,6 +10,17 @@ import numpy as np
 from .models import LoggedMetric, LoggedMetrics, LoggedParam, LoggedParams
 
 
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NpEncoder, self).default(obj)
+
+
 # Check for MLflow and W&B availability
 mlflow_available = importlib.util.find_spec("mlflow") is not None
 wandb_available = importlib.util.find_spec("wandb") is not None
@@ -164,7 +175,7 @@ class AutoLogger(ABC):
 
         if run_logs is not None:
             with open(log_file_path, "w") as log_file:
-                json.dump(run_logs, log_file, indent=4)
+                json.dump(run_logs, log_file, indent=4, cls=NpEncoder)
             return log_file_path
 
         return None
@@ -310,11 +321,6 @@ class MLflowAutoLogger(AutoLogger):
         param_result = _original_mlflow_log_param(key, value, synchronous)
 
         if not key.startswith("system/"):
-            safe_value = value
-            if isinstance(safe_value, (np.integer, np.int64)):
-                safe_value = int(safe_value)
-            elif isinstance(safe_value, (np.float32, np.float64)):
-                safe_value = float(safe_value)
             param = LoggedParam(key, value)
             self.param_store.add_param(param)
 
@@ -333,12 +339,7 @@ class MLflowAutoLogger(AutoLogger):
 
         for key, value in params.items():
             if not key.startswith("system/"):
-                safe_value = value
-                if isinstance(safe_value, (np.integer, np.int64)):
-                    safe_value = int(safe_value)
-                elif isinstance(safe_value, (np.float32, np.float64)):
-                    safe_value = float(safe_value)
-                param = LoggedParam(key, safe_value)
+                param = LoggedParam(key, value)
                 self.param_store.add_param(param)
 
         return param_result
