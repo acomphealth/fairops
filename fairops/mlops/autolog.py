@@ -5,6 +5,7 @@ import tempfile
 from abc import ABC, abstractmethod
 import shutil
 from typing import Union, Optional
+import numpy as np
 
 from .models import LoggedMetric, LoggedMetrics, LoggedParam, LoggedParams
 
@@ -308,8 +309,14 @@ class MLflowAutoLogger(AutoLogger):
 
         param_result = _original_mlflow_log_param(key, value, synchronous)
 
-        param = LoggedParam(key, value)
-        self.param_store.add_param(param)
+        if not key.startswith("system/"):
+            safe_value = value
+            if isinstance(safe_value, (np.integer, np.int64)):
+                safe_value = int(safe_value)
+            elif isinstance(safe_value, (np.float32, np.float64)):
+                safe_value = float(safe_value)
+            param = LoggedParam(key, value)
+            self.param_store.add_param(param)
 
         return param_result
 
@@ -325,8 +332,14 @@ class MLflowAutoLogger(AutoLogger):
         param_result = _original_mlflow_log_params(params, synchronous, run_id)
 
         for key, value in params.items():
-            param = LoggedParam(key, value)
-            self.param_store.add_param(param)
+            if not key.startswith("system/"):
+                safe_value = value
+                if isinstance(safe_value, (np.integer, np.int64)):
+                    safe_value = int(safe_value)
+                elif isinstance(safe_value, (np.float32, np.float64)):
+                    safe_value = float(safe_value)
+                param = LoggedParam(key, safe_value)
+                self.param_store.add_param(param)
 
         return param_result
 
